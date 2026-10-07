@@ -1,0 +1,176 @@
+@model Student
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "Yangi o'quvchi" : "O'quvchini tahrirlash";
+    var firstPayment = ViewBag.FirstPayment as long? ?? 0;
+    var firstMethod = ViewBag.FirstPaymentMethod as PaymentMethod? ?? PaymentMethod.Cash;
+    var cancelUrl = isNew
+        ? (Model.CenterId > 0 ? Url.Action("Details", "Centers", new { id = Model.CenterId }) : Url.Action("Index"))
+        : Url.Action("Details", new { id = Model.Id });
+}
+
+<div class="page-header">
+    <div>
+        <div class="crumbs"><a asp-action="Index">O'quvchilar</a><i class="bi bi-chevron-right"></i>@(isNew ? "Yangi" : Model.FullName)</div>
+        <h1 class="page-title">@ViewData["Title"]</h1>
+    </div>
+</div>
+
+<form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? (int?)null : Model.Id)" method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="All" class="alert alert-danger"></div>
+
+    <div class="row g-3">
+        <div class="col-lg-4 col-xl-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="photo-drop mb-3" data-photo-drop>
+                        <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" class="d-none" />
+                        @if (Model.PhotoFileName != null)
+                        {
+                            <img src="@Url.Action("Photo", new { id = Model.Id })" alt="Rasm" />
+                        }
+                        else
+                        {
+                            <img class="d-none" alt="Rasm" />
+                            <div class="ph"><i class="bi bi-camera"></i>Rasm yuklash<br /><small>bosing yoki shu yerga tashlang</small></div>
+                        }
+                    </div>
+                    <div class="small text-muted">3×4 rasm · JPG, PNG, WEBP · 5 MB gacha</div>
+                    @if (Model.PhotoFileName != null)
+                    {
+                        <div class="form-check d-inline-block mt-2">
+                            <input class="form-check-input" type="checkbox" name="removePhoto" value="true" id="removePhoto" />
+                            <label class="form-check-label small" for="removePhoto">Rasmni o'chirish</label>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8 col-xl-9">
+            <div class="card">
+                <div class="form-section">
+                    <div class="form-section-title"><i class="bi bi-person-vcard"></i> Shaxsiy ma'lumotlar</div>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label asp-for="LastName" class="form-label req"></label>
+                            <input asp-for="LastName" class="form-control" autofocus />
+                            <span asp-validation-for="LastName" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="FirstName" class="form-label req"></label>
+                            <input asp-for="FirstName" class="form-control" />
+                            <span asp-validation-for="FirstName" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="MiddleName" class="form-label"></label>
+                            <input asp-for="MiddleName" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="BirthDate" class="form-label req"></label>
+                            <input asp-for="BirthDate" class="form-control" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="BirthDate" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Phone" class="form-label"></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                <input asp-for="Phone" class="form-control" placeholder="+998 90 123 45 67" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="PassportNo" class="form-label"></label>
+                            <input asp-for="PassportNo" class="form-control text-uppercase" placeholder="AB1234567" />
+                            <span asp-validation-for="PassportNo" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Address" class="form-label"></label>
+                            <input asp-for="Address" class="form-control" placeholder="Viloyat, tuman, ko'cha, uy" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title"><i class="bi bi-mortarboard"></i> O'qish</div>
+                    <div class="row g-3">
+                        @if (Me.IsOwner)
+                        {
+                            <div class="col-md-6">
+                                <label asp-for="CenterId" class="form-label req"></label>
+                                <select asp-for="CenterId" asp-items="ViewBag.Centers" class="form-select">
+                                    <option value="0">— Markazni tanlang —</option>
+                                </select>
+                                <span asp-validation-for="CenterId" class="field-validation-error"></span>
+                            </div>
+                        }
+                        else
+                        {
+                            <input type="hidden" asp-for="CenterId" />
+                        }
+                        <div class="col-md-3 col-6">
+                            <label asp-for="Category" class="form-label"></label>
+                            <select asp-for="Category" class="form-select">
+                                <option value="">—</option>
+                                @foreach (var c in Fmt.Categories)
+                                {
+                                    <option value="@c">@c</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label asp-for="Status" class="form-label"></label>
+                            <select asp-for="Status" asp-items="Html.GetEnumSelectList<StudentStatus>()" class="form-select"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ContractNo" class="form-label"></label>
+                            <input asp-for="ContractNo" class="form-control" placeholder="Masalan: 2026/145" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EnrolledAt" class="form-label"></label>
+                            <input asp-for="EnrolledAt" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title"><i class="bi bi-cash-coin"></i> To'lov</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="TotalFee" class="form-label req"></label>
+                            <div class="input-group">
+                                <input asp-for="TotalFee" type="text" data-val="false" class="form-control fw-semibold" data-money />
+                                <span class="input-group-text">so'm</span>
+                            </div>
+                            <span asp-validation-for="TotalFee" class="field-validation-error"></span>
+                        </div>
+                        @if (isNew)
+                        {
+                            <div class="col-md-6">
+                                <label for="firstPayment" class="form-label">Hozir to'ladi (ixtiyoriy)</label>
+                                <div class="input-group">
+                                    <input type="text" id="firstPayment" name="firstPayment" value="@firstPayment" class="form-control" data-money />
+                                    <select name="firstPaymentMethod" class="form-select" style="max-width:150px" asp-items="Html.GetEnumSelectList<PaymentMethod>().Select(i => { i.Selected = i.Value == ((int)firstMethod).ToString(); return i; })"></select>
+                                </div>
+                                <span class="field-validation-error">@Html.ValidationMessage("firstPayment")</span>
+                                <div class="form-text">Qabul qilingan sana bilan birinchi to'lov sifatida yoziladi.</div>
+                            </div>
+                        }
+                        <div class="col-12">
+                            <label asp-for="Note" class="form-label"></label>
+                            <textarea asp-for="Note" class="form-control" rows="2" placeholder="Qo'shimcha ma'lumot, chegirma sababi va h.k."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer d-flex gap-2 justify-content-end">
+                    <a class="btn btn-light" href="@cancelUrl">Bekor qilish</a>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Saqlash</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

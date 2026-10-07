@@ -1,0 +1,85 @@
+@model LoginViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kirish — Prava Markaz</title>
+    <script>
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem('pm-theme'); } catch (e) { }
+            if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-bs-theme', t);
+        })();
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="auth">
+        <section class="auth-hero">
+            <div class="d-flex align-items-center gap-3">
+                <span class="brand-logo"><i class="bi bi-car-front-fill"></i></span>
+                <div>
+                    <div class="brand-name">Prava Markaz</div>
+                    <div class="brand-sub">Boshqaruv tizimi</div>
+                </div>
+            </div>
+            <div>
+                <h1 class="mb-3">Barcha filiallaringiz hisobi — bitta joyda</h1>
+                <p class="mb-4">O'quvchilar, to'lovlar va qarzdorlikni har bir markaz bo'yicha alohida, aniq va tez kuzating.</p>
+                <div class="auth-feature"><i class="bi bi-buildings"></i> Istalgancha markaz, har biri alohida hisob</div>
+                <div class="auth-feature"><i class="bi bi-receipt"></i> Kvitansiya, to'lovlar tarixi va qarzdorlar</div>
+                <div class="auth-feature"><i class="bi bi-bar-chart-line"></i> Oylik tushum grafiklari va Excel hisobotlar</div>
+                <div class="auth-feature"><i class="bi bi-shield-check"></i> Menejerlar uchun alohida huquqlar</div>
+            </div>
+            <div class="small" style="color:#5b6781">© @DateTime.Today.Year Prava Markaz</div>
+        </section>
+
+        <section class="auth-form">
+            <div class="auth-box">
+                <div class="d-lg-none text-center mb-4">
+                    <span class="brand-logo mx-auto mb-2"><i class="bi bi-car-front-fill"></i></span>
+                    <div class="brand-name">Prava Markaz</div>
+                </div>
+                <h2 class="fw-bold mb-1" style="letter-spacing:-.02em">Xush kelibsiz</h2>
+                <p class="text-muted mb-4">Davom etish uchun tizimga kiring</p>
+
+                @if (TempData["Ok"] is string ok)
+                {
+                    <div class="alert alert-success py-2 small">@ok</div>
+                }
+
+                <form asp-action="Login" method="post">
+                    <input type="hidden" asp-for="ReturnUrl" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+                    <div class="mb-3">
+                        <label asp-for="Username" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input asp-for="Username" class="form-control" autocomplete="username" autofocus />
+                        </div>
+                        <span asp-validation-for="Username" class="field-validation-error"></span>
+                    </div>
+                    <div class="mb-4">
+                        <label asp-for="Password" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input asp-for="Password" class="form-control" autocomplete="current-password" id="pwd" />
+                            <button class="btn btn-light border" type="button" onclick="var p=document.getElementById('pwd');p.type=p.type==='password'?'text':'password'" title="Parolni ko'rsatish"><i class="bi bi-eye"></i></button>
+                        </div>
+                        <span asp-validation-for="Password" class="field-validation-error"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Kirish <i class="bi bi-arrow-right"></i></button>
+                </form>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

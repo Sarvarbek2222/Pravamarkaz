@@ -1,0 +1,31 @@
+@model CenterDetailsViewModel
+@{
+    var c = Model.Center;
+    ViewData["Title"] = c.Name;
+    ViewData["DebtorCount"] = c.DebtorCount;
+}
+
+<div class="page-header">
+    <div>
+        <div class="crumbs no-print"><a asp-action="Index">Markazlar</a><i class="bi bi-chevron-right"></i>@c.Name</div>
+        <h1 class="page-title">@c.Name</h1>
+        <div class="page-sub">
+            <i class="bi bi-geo-alt"></i> @(string.IsNullOrEmpty(c.Address) ? "Manzil ko'rsatilmagan" : c.Address)
+            @if (!string.IsNullOrEmpty(c.Phone))
+            {
+                <span class="ms-2"><i class="bi bi-telephone"></i> @c.Phone</span>
+            }
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 no-print">
+        <a class="btn btn-light" asp-controller="Payments" asp-action="Index" asp-route-centerId="@c.Id"><i class="bi bi-wallet2"></i> To'lovlar</a>
+        @if (Me.IsOwner)
+        {
+            <a class="btn btn-light" asp-action="Edit" asp-route-id="@c.Id"><i class="bi bi-pencil"></i> Tahrirlash</a>
+        }
+        <a class="btn btn-primary" asp-controller="Students" asp-action="Create" asp-route-centerId="@c.Id"><i class="bi bi-person-plus"></i> O'quvchi qo'shish</a>
+    </div>
+</div>
+
+<partial name="_MoneyKpis" model="c" />
+<partial name="_StudentTable" model="Model.Students" />

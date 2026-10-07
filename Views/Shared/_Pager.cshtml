@@ -1,0 +1,41 @@
+@model PagerInfo
+@{
+    if (Model.Total == 0) return;
+    var pages = new SortedSet<int> { 1, Model.PageCount };
+    for (var p = Model.Page - 2; p <= Model.Page + 2; p++)
+        if (p >= 1 && p <= Model.PageCount) pages.Add(p);
+    string Url(int p) => QueryUrl.With(Context.Request, "page", p == 1 ? null : p.ToString());
+}
+<div class="pager">
+    <span>@Model.From–@Model.To / jami <b>@Model.Total</b></span>
+    @if (Model.PageCount > 1)
+    {
+        <div class="pages">
+            @if (Model.Page > 1)
+            {
+                <a href="@Url(Model.Page - 1)" aria-label="Oldingi"><i class="bi bi-chevron-left"></i></a>
+            }
+            @{ var prev = 0; }
+            @foreach (var p in pages)
+            {
+                if (prev > 0 && p - prev > 1)
+                {
+                    <span class="gap">…</span>
+                }
+                if (p == Model.Page)
+                {
+                    <span class="current">@p</span>
+                }
+                else
+                {
+                    <a href="@Url(p)">@p</a>
+                }
+                prev = p;
+            }
+            @if (Model.Page < Model.PageCount)
+            {
+                <a href="@Url(Model.Page + 1)" aria-label="Keyingi"><i class="bi bi-chevron-right"></i></a>
+            }
+        </div>
+    }
+</div>

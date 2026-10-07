@@ -1,0 +1,16 @@
+@model StudentListViewModel
+@{
+    ViewData["Title"] = "O'quvchilar";
+    ViewData["DebtorCount"] = Model.DebtorCount;
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">O'quvchilar</h1>
+        <div class="page-sub">@(Me.IsOwner ? "Barcha markazlar" : "Markazingiz") o'quvchilari va ularning to'lov holati</div>
+    </div>
+    <a class="btn btn-primary" asp-action="Create" asp-route-centerId="@Model.Filter.CenterId"><i class="bi bi-person-plus"></i> Yangi o'quvchi</a>
+</div>
+
+<partial name="_MoneyKpis" model="Model.Summary" />
+<partial name="_StudentTable" model="Model" />

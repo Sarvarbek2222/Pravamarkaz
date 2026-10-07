@@ -1,0 +1,36 @@
+@model Student
+@{
+    ViewData["Title"] = "O'quvchini o'chirish";
+    var paid = Model.Payments.Sum(p => p.Amount);
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body p-4 text-center">
+                <div class="empty-icon tone-danger mb-3"><i class="bi bi-person-x"></i></div>
+                <h1 class="h4 fw-bold mb-1">@Model.FullName</h1>
+                <p class="text-muted">@Model.Center?.Name</p>
+
+                @if (Model.Payments.Count > 0)
+                {
+                    <div class="alert alert-danger text-start">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        O'quvchining <b>@Model.Payments.Count ta to'lovi</b> (jami <b>@Fmt.Money(paid)</b>) ham o'chadi va markaz hisobidan ayriladi.
+                        Agar o'quvchi shunchaki o'qishni tashlagan bo'lsa, o'chirish o'rniga holatini <b>"Chiqib ketgan"</b> qilib qo'yish tavsiya etiladi.
+                    </div>
+                }
+                else
+                {
+                    <p>O'quvchi butunlay o'chiriladi. Bu amalni qaytarib bo'lmaydi.</p>
+                }
+
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-flex gap-2 mt-3">
+                    <a class="btn btn-light flex-fill" asp-action="Details" asp-route-id="@Model.Id">Bekor qilish</a>
+                    <a class="btn btn-light flex-fill" asp-action="Edit" asp-route-id="@Model.Id">Holatini o'zgartirish</a>
+                    <button type="submit" class="btn btn-danger flex-fill"><i class="bi bi-trash3"></i> O'chirish</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

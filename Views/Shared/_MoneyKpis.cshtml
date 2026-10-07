@@ -1,0 +1,38 @@
+@model MoneySummary
+@{
+    var pct = Fmt.Percent(Model.Paid, Model.TotalFee);
+    var debtors = ViewData["DebtorCount"] as int?;
+}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">O'quvchilar</span><span class="kpi-icon tone-primary"><i class="bi bi-people"></i></span></div>
+            <div class="kpi-value">@Model.StudentCount</div>
+            <div class="kpi-foot">@(debtors != null ? $"{debtors} nafari qarzdor" : "ro'yxatdagi jami")</div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">Olinishi kerak</span><span class="kpi-icon tone-violet"><i class="bi bi-receipt"></i></span></div>
+            <div class="kpi-value">@Fmt.Num(Model.TotalFee)<small>so'm</small></div>
+            <div class="kpi-foot">kurs narxlari yig'indisi</div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">Olindi</span><span class="kpi-icon tone-success"><i class="bi bi-cash-coin"></i></span></div>
+            <div class="kpi-value text-success">@Fmt.Num(Model.Paid)<small>so'm</small></div>
+            <div class="d-flex align-items-center gap-2 mt-2">
+                <div class="bar flex-grow-1"><span style="width:@pct%"></span></div>
+                <small class="fw-semibold">@pct%</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">Qolgan qarz</span><span class="kpi-icon tone-danger"><i class="bi bi-hourglass-split"></i></span></div>
+            <div class="kpi-value text-danger">@Fmt.Num(Model.Debt)<small>so'm</small></div>
+            <div class="kpi-foot">olinishi qoldi</div>
+        </div>
+    </div>
+</div>

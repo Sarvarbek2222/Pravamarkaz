@@ -1,0 +1,17 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "Xatolik";
+}
+
+<div class="card">
+    <div class="empty">
+        <div class="empty-icon tone-danger"><i class="bi bi-bug"></i></div>
+        <h3>Kutilmagan xatolik yuz berdi</h3>
+        <p>So'rovni bajarib bo'lmadi. Iltimos, qaytadan urinib ko'ring.</p>
+        @if (Model.ShowRequestId)
+        {
+            <p class="small">So'rov ID: <code>@Model.RequestId</code></p>
+        }
+        <a class="btn btn-primary" asp-controller="Home" asp-action="Index"><i class="bi bi-house"></i> Bosh sahifa</a>
+    </div>
+</div>

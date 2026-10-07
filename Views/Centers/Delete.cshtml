@@ -1,0 +1,36 @@
+@model CenterSummary
+@{
+    ViewData["Title"] = "Markazni o'chirish";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="empty-icon tone-danger mb-3"><i class="bi bi-trash3"></i></div>
+                <h1 class="h4 text-center fw-bold mb-2">"@Model.Name" markazini o'chirish</h1>
+                <p class="text-center text-muted">Bu amalni qaytarib bo'lmaydi.</p>
+
+                @if (Model.StudentCount > 0)
+                {
+                    <div class="alert alert-danger">
+                        <div class="fw-semibold mb-1"><i class="bi bi-exclamation-triangle"></i> Diqqat!</div>
+                        Markaz bilan birga <b>@Model.StudentCount ta o'quvchi</b>, ularning rasmlari va
+                        jami <b>@Fmt.Money(Model.Paid)</b> lik to'lov yozuvlari ham o'chib ketadi.
+                        Avval Excel ga yuklab olishni tavsiya qilamiz.
+                    </div>
+                    <a class="btn btn-light w-100 mb-3" asp-controller="Students" asp-action="Export" asp-route-centerId="@Model.Id"><i class="bi bi-file-earmark-excel text-success"></i> O'quvchilarni Excel ga yuklab olish</a>
+                }
+
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                    <label class="form-label">Tasdiqlash uchun markaz nomini yozing: <b>@Model.Name</b></label>
+                    <input type="text" name="confirmName" class="form-control mb-3" autocomplete="off" required />
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-light flex-fill" asp-action="Details" asp-route-id="@Model.Id">Bekor qilish</a>
+                        <button type="submit" class="btn btn-danger flex-fill"><i class="bi bi-trash3"></i> O'chirish</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

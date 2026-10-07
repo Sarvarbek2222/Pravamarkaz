@@ -1,0 +1,290 @@
+@model DashboardViewModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Boshqaruv paneli";
+    var total = Model.Total;
+    var pct = Fmt.Percent(total.Paid, total.TotalFee);
+    var delta = Model.PaidLastMonth > 0 ? (int)Math.Round((Model.PaidThisMonth - Model.PaidLastMonth) * 100.0 / Model.PaidLastMonth) : (int?)null;
+    var hour = DateTime.Now.Hour;
+    var greeting = hour < 12 ? "Xayrli tong" : hour < 18 ? "Xayrli kun" : "Xayrli kech";
+    // F.I.Sh. "Familiya Ism" tartibida — murojaatda ism ishlatiladi
+    var nameParts = Me.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var firstName = nameParts.Length >= 2 ? nameParts[1] : Me.FullName;
+
+    // Grafik: oxirgi 12 oy, har bir markaz alohida seriya
+    var start = Queries.MonthStart().AddMonths(-11);
+    var months = Enumerable.Range(0, 12).Select(i => start.AddMonths(i)).ToList();
+    var palette = new[] { "#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444", "#06b6d4", "#ec4899", "#84cc16" };
+    var chart = new
+    {
+        labels = months.Select(m => Fmt.Months[m.Month - 1][..3] + " " + (m.Year % 100).ToString("00")).ToArray(),
+        datasets = Model.Centers.Select((c, idx) => new
+        {
+            label = c.Name,
+            data = months.Select(m => Model.Monthly.Where(x => x.CenterId == c.Id && x.Year == m.Year && x.Month == m.Month).Sum(x => x.Sum)).ToArray(),
+            backgroundColor = palette[idx % palette.Length]
+        }).ToArray()
+    };
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">@greeting, @firstName!</h1>
+        <div class="page-sub">@Fmt.Date(DateTime.Today) · @(Me.IsOwner ? $"{Model.Centers.Count} ta markaz bo'yicha umumiy holat" : "Markazingiz bo'yicha holat")</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-light" asp-controller="Payments" asp-action="Index"><i class="bi bi-wallet2"></i> Kassa</a>
+        <a class="btn btn-primary" asp-controller="Students" asp-action="Create"><i class="bi bi-person-plus"></i> Yangi o'quvchi</a>
+    </div>
+</div>
+
+@if (Model.Centers.Count == 0)
+{
+    <div class="card">
+        <div class="empty">
+            <div class="empty-icon"><i class="bi bi-buildings"></i></div>
+            <h3>Hali o'quv markazi qo'shilmagan</h3>
+            <p>Ishni boshlash uchun birinchi markazingizni qo'shing.</p>
+            @if (Me.IsOwner)
+            {
+                <a class="btn btn-primary" asp-controller="Centers" asp-action="Create"><i class="bi bi-plus-lg"></i> Markaz qo'shish</a>
+            }
+        </div>
+    </div>
+    return;
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">Shu oy tushum</span><span class="kpi-icon tone-success"><i class="bi bi-graph-up-arrow"></i></span></div>
+            <div class="kpi-value">@Fmt.Num(Model.PaidThisMonth)<small>so'm</small></div>
+            <div class="kpi-foot">
+                @if (delta != null)
+                {
+                    <span class="delta @(delta >= 0 ? "up" : "down")"><i class="bi bi-arrow-@(delta >= 0 ? "up" : "down")-right"></i> @Math.Abs(delta.Value)%</span>
+                    <span> o'tgan oyga nisbatan</span>
+                }
+                else
+                {
+                    <span>Bugun: <b>@Fmt.Money(Model.PaidToday)</b></span>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">Jami olindi</span><span class="kpi-icon tone-primary"><i class="bi bi-cash-coin"></i></span></div>
+            <div class="kpi-value">@Fmt.Num(total.Paid)<small>so'm</small></div>
+            <div class="d-flex align-items-center gap-2 mt-2">
+                <div class="bar flex-grow-1"><span style="width:@pct%"></span></div>
+                <small class="fw-semibold">@pct%</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">Qolgan qarz</span><span class="kpi-icon tone-danger"><i class="bi bi-hourglass-split"></i></span></div>
+            <div class="kpi-value text-danger">@Fmt.Num(total.Debt)<small>so'm</small></div>
+            <div class="kpi-foot">@Model.Centers.Sum(c => c.DebtorCount) nafar qarzdor o'quvchi</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">O'quvchilar</span><span class="kpi-icon tone-violet"><i class="bi bi-people"></i></span></div>
+            <div class="kpi-value">@total.StudentCount</div>
+            <div class="kpi-foot">@Model.Centers.Sum(c => c.ActiveCount) nafari o'qimoqda · shu oy +@Model.NewThisMonth</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-8">
+        <div class="card h-100">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">Oylik tushum</h2>
+                    <div class="small text-muted">Oxirgi 12 oy, markazlar bo'yicha</div>
+                </div>
+                <span class="badge-soft soft-success no-dot">12 oyda: @Fmt.Short(Model.Monthly.Sum(m => m.Sum)) so'm</span>
+            </div>
+            <div class="card-body">
+                <div style="height:300px"><canvas id="revenueChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2 class="card-title">Eng katta qarzdorlar</h2>
+                <a class="small" asp-controller="Students" asp-action="Index" asp-route-pay="debt" asp-route-sort="debt">Hammasi</a>
+            </div>
+            @if (Model.TopDebtors.Count == 0)
+            {
+                <div class="empty py-4"><div class="empty-icon tone-success"><i class="bi bi-emoji-smile"></i></div><h3>Qarzdor yo'q</h3></div>
+            }
+            else
+            {
+                <ul class="timeline">
+                    @foreach (var s in Model.TopDebtors)
+                    {
+                        <li>
+                            @if (s.HasPhoto)
+                            {
+                                <img class="avatar avatar-sm" src="@Url.Action("Photo", "Students", new { id = s.Id })" loading="lazy" alt="" />
+                            }
+                            else
+                            {
+                                <span class="avatar avatar-sm">@Fmt.Initials(s.LastName, s.FirstName)</span>
+                            }
+                            <div class="flex-grow-1 min-w-0">
+                                <a class="person-name d-block text-truncate" asp-controller="Students" asp-action="Details" asp-route-id="@s.Id">@s.LastName @s.FirstName</a>
+                                <div class="person-sub text-truncate">@s.CenterName</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-semibold text-danger text-nowrap">@Fmt.Num(s.Debt)</div>
+                                <div class="person-sub">@Fmt.Percent(s.Paid, s.TotalFee)% to'lagan</div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Markazlar bo'yicha hisob</h2>
+                @if (Me.IsOwner)
+                {
+                    <a class="btn btn-sm btn-light" asp-controller="Centers" asp-action="Create"><i class="bi bi-plus-lg"></i> Markaz</a>
+                }
+            </div>
+            <div class="table-wrap">
+                <table class="table table-pm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Markaz</th>
+                            <th class="text-center">O'quvchi</th>
+                            <th class="text-end">Olinishi kerak</th>
+                            <th class="text-end">Olindi</th>
+                            <th class="text-end">Qarz</th>
+                            <th style="width:130px">Holat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model.Centers)
+                        {
+                            var p = Fmt.Percent(c.Paid, c.TotalFee);
+                            <tr data-href="@Url.Action("Details", "Centers", new { id = c.Id })">
+                                <td>
+                                    <a class="person-name" asp-controller="Centers" asp-action="Details" asp-route-id="@c.Id">@c.Name</a>
+                                    <div class="person-sub">Shu oy: @Fmt.Money(c.PaidThisMonth)</div>
+                                </td>
+                                <td class="text-center">@c.StudentCount</td>
+                                <td class="text-end text-nowrap">@Fmt.Num(c.TotalFee)</td>
+                                <td class="text-end text-nowrap text-success fw-medium">@Fmt.Num(c.Paid)</td>
+                                <td class="text-end text-nowrap text-danger fw-semibold">@Fmt.Num(c.Debt)</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="bar flex-grow-1"><span style="width:@p%"></span></div>
+                                        <small class="text-muted">@p%</small>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    @if (Model.Centers.Count > 1)
+                    {
+                        <tfoot>
+                            <tr>
+                                <td>Jami</td>
+                                <td class="text-center">@total.StudentCount</td>
+                                <td class="text-end text-nowrap">@Fmt.Num(total.TotalFee)</td>
+                                <td class="text-end text-nowrap text-success">@Fmt.Num(total.Paid)</td>
+                                <td class="text-end text-nowrap text-danger">@Fmt.Num(total.Debt)</td>
+                                <td><small class="text-muted">@pct%</small></td>
+                            </tr>
+                        </tfoot>
+                    }
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Oxirgi to'lovlar</h2>
+                <a class="small" asp-controller="Payments" asp-action="Index">Kassa</a>
+            </div>
+            @if (Model.RecentPayments.Count == 0)
+            {
+                <div class="empty py-4"><div class="empty-icon"><i class="bi bi-wallet2"></i></div><h3>Hali to'lov yo'q</h3></div>
+            }
+            else
+            {
+                <ul class="timeline">
+                    @foreach (var p in Model.RecentPayments)
+                    {
+                        <li>
+                            <span class="dot tone-success"><i class="bi @Fmt.MethodIcon(p.Method)"></i></span>
+                            <div class="flex-grow-1 min-w-0">
+                                <a class="person-name d-block text-truncate" asp-controller="Students" asp-action="Details" asp-route-id="@p.StudentId">@p.StudentName</a>
+                                <div class="person-sub text-truncate">@Fmt.Date(p.PaidAt) · @p.CenterName</div>
+                            </div>
+                            <div class="fw-semibold text-success text-nowrap">+@Fmt.Num(p.Amount)</div>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            var data = @Html.Raw(JsonSerializer.Serialize(chart));
+            var el = document.getElementById('revenueChart');
+            if (!el || !window.Chart) return;
+            data.datasets.forEach(function (d) { d.borderRadius = 6; d.maxBarThickness = 34; });
+            var chart;
+            function render() {
+                var dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+                var grid = dark ? 'rgba(148,163,184,.12)' : 'rgba(15,23,42,.06)';
+                var text = dark ? '#94a3b8' : '#64748b';
+                if (chart) chart.destroy();
+                chart = new Chart(el, {
+                    type: 'bar',
+                    data: data,
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { display: data.datasets.length > 1, position: 'bottom', labels: { color: text, usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 10 } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (c) { return ' ' + c.dataset.label + ': ' + pmGroupDigits(c.parsed.y) + " so'm"; },
+                                    footer: function (items) { var s = items.reduce(function (a, i) { return a + i.parsed.y; }, 0); return items.length > 1 ? 'Jami: ' + pmGroupDigits(s) + " so'm" : ''; }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { stacked: true, grid: { display: false }, ticks: { color: text } },
+                            y: {
+                                stacked: true, grid: { color: grid }, border: { display: false },
+                                ticks: { color: text, callback: function (v) { return v >= 1e6 ? (v / 1e6).toLocaleString('ru') + ' mln' : v >= 1e3 ? (v / 1e3) + ' ming' : v; } }
+                            }
+                        }
+                    }
+                });
+            }
+            render();
+            document.addEventListener('pm:theme', render);
+        })();
+    </script>
+}

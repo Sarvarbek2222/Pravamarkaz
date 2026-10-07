@@ -1,0 +1,67 @@
+@model List<AppUser>
+@{
+    ViewData["Title"] = "Foydalanuvchilar";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Foydalanuvchilar</h1>
+        <div class="page-sub">Markaz menejerlari faqat o'z markazini ko'radi va boshqaradi</div>
+    </div>
+    <a class="btn btn-primary" asp-action="Create"><i class="bi bi-person-plus"></i> Yangi foydalanuvchi</a>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table class="table table-pm">
+            <thead>
+                <tr>
+                    <th>Foydalanuvchi</th>
+                    <th>Rol</th>
+                    <th>Markaz</th>
+                    <th>Holat</th>
+                    <th>Oxirgi kirish</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="person">
+                                <span class="avatar avatar-round @(u.Role == UserRole.Owner ? "tone-violet" : "")">@Fmt.Initials(u.FullName, null)</span>
+                                <div>
+                                    <div class="person-name">@u.FullName @if (u.Id == Me.Id) { <span class="badge-soft soft-secondary no-dot ms-1">siz</span> }</div>
+                                    <div class="person-sub">@@@u.Username</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge-soft @(u.Role == UserRole.Owner ? "soft-violet" : "soft-primary") no-dot">@Fmt.Label(u.Role)</span></td>
+                        <td>@(u.Role == UserRole.Owner ? "Barcha markazlar" : u.Center?.Name ?? "— biriktirilmagan —")</td>
+                        <td>
+                            @if (u.IsActive)
+                            {
+                                <span class="badge-soft soft-success">Faol</span>
+                            }
+                            else
+                            {
+                                <span class="badge-soft soft-danger">Bloklangan</span>
+                            }
+                        </td>
+                        <td class="text-muted small">@Fmt.DateTime(u.LastLoginAt)</td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-light" asp-action="Edit" asp-route-id="@u.Id"><i class="bi bi-pencil"></i> Tahrirlash</a>
+                            @if (u.Id != Me.Id)
+                            {
+                                <form asp-action="Delete" asp-route-id="@u.Id" method="post" class="d-inline" data-confirm="@u.FullName ni o'chirasizmi? U endi tizimga kira olmaydi.">
+                                    <button class="btn btn-sm btn-light btn-icon text-danger" title="O'chirish"><i class="bi bi-trash3"></i></button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

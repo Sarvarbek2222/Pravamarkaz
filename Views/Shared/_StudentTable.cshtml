@@ -1,0 +1,158 @@
+@model StudentListViewModel
+@{
+    var f = Model.Filter;
+    var sort = f.Sort ?? "name";
+    string SortLink(string key, string text)
+    {
+        var cls = sort == key ? "sorted" : "";
+        var icon = sort == key ? " <i class=\"bi bi-arrow-down-short\"></i>" : "";
+        return $"<a class=\"{cls}\" href=\"{QueryUrl.With(Context.Request, "sort", key == "name" ? null : key)}\">{text}{icon}</a>";
+    }
+    string PayUrl(string? v) => QueryUrl.With(Context.Request, "pay", v);
+    var exportUrl = QueryUrl.ForAction(Context.Request, "/Students/Export");
+    if (!Model.ShowCenterColumn) exportUrl += (exportUrl.Contains('?') ? "&" : "?") + "centerId=" + f.CenterId;
+}
+
+<div class="card">
+    <form method="get" class="filter-bar no-print">
+        <input type="hidden" name="sort" value="@f.Sort" />
+        @if (Model.ShowCenterColumn && ViewBag.Centers != null && Me.IsOwner)
+        {
+            <select name="centerId" asp-items="ViewBag.Centers" class="form-select w-auto" data-autosubmit>
+                <option value="">Barcha markazlar</option>
+            </select>
+        }
+        <div class="search">
+            <i class="bi bi-search"></i>
+            <input type="search" name="q" value="@f.Q" class="form-control" placeholder="Ism, familiya, telefon, pasport, shartnoma..." />
+        </div>
+        <select name="status" class="form-select w-auto" data-autosubmit>
+            <option value="">Barcha holatlar</option>
+            @foreach (var st in Enum.GetValues<StudentStatus>())
+            {
+                <option value="@st" selected="@(f.Status == st)">@Fmt.Label(st)</option>
+            }
+        </select>
+        <select name="category" class="form-select w-auto" data-autosubmit>
+            <option value="">Barcha toifalar</option>
+            @foreach (var c in Fmt.Categories)
+            {
+                <option value="@c" selected="@(f.Category == c)">@c</option>
+            }
+        </select>
+        <input type="hidden" name="pay" value="@f.Pay" />
+        <button class="btn btn-light" type="submit"><i class="bi bi-funnel"></i> Filtr</button>
+    </form>
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-3 py-2 border-bottom no-print">
+        <div class="chip-group">
+            <a href="@PayUrl(null)" class="@(string.IsNullOrEmpty(f.Pay) ? "active" : "")">Hammasi</a>
+            <a href="@PayUrl("debt")" class="@(f.Pay == "debt" ? "active" : "")">Qarzdorlar</a>
+            <a href="@PayUrl("paid")" class="@(f.Pay == "paid" ? "active" : "")">To'liq to'laganlar</a>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-light" href="@exportUrl"><i class="bi bi-file-earmark-excel text-success"></i> Excel</a>
+            <button type="button" class="btn btn-sm btn-light" onclick="window.print()"><i class="bi bi-printer"></i> Chop etish</button>
+        </div>
+    </div>
+
+    @if (Model.Rows.Items.Count == 0)
+    {
+        <div class="empty">
+            <div class="empty-icon"><i class="bi bi-people"></i></div>
+            <h3>O'quvchi topilmadi</h3>
+            <p class="mb-0">Filtrlarni o'zgartirib ko'ring yoki yangi o'quvchi qo'shing.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-pm table-hover">
+                <thead>
+                    <tr>
+                        <th style="width:3rem">#</th>
+                        <th>@Html.Raw(SortLink("name", "O'quvchi"))</th>
+                        @if (Model.ShowCenterColumn)
+                        {
+                            <th>Markaz</th>
+                        }
+                        <th>Toifa</th>
+                        <th>Holati</th>
+                        <th class="text-end">Kurs narxi</th>
+                        <th class="text-end" style="min-width:150px">@Html.Raw(SortLink("paid", "To'langan"))</th>
+                        <th class="text-end">@Html.Raw(SortLink("debt", "Qarz"))</th>
+                        <th>@Html.Raw(SortLink("lastpay", "Oxirgi to'lov"))</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var i = Model.Rows.FirstIndex; }
+                    @foreach (var s in Model.Rows.Items)
+                    {
+                        i++;
+                        var pct = Fmt.Percent(s.Paid, s.TotalFee);
+                        <tr data-href="@Url.Action("Details", "Students", new { id = s.Id })">
+                            <td class="text-muted">@i</td>
+                            <td>
+                                <div class="person">
+                                    @if (s.HasPhoto)
+                                    {
+                                        <img class="avatar" src="@Url.Action("Photo", "Students", new { id = s.Id })" loading="lazy" alt="" />
+                                    }
+                                    else
+                                    {
+                                        <span class="avatar">@Fmt.Initials(s.LastName, s.FirstName)</span>
+                                    }
+                                    <div class="min-w-0">
+                                        <a class="person-name" asp-controller="Students" asp-action="Details" asp-route-id="@s.Id">@s.FullName</a>
+                                        <div class="person-sub">
+                                            @(s.Phone ?? "Telefon yo'q") · @Fmt.Date(s.BirthDate)
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            @if (Model.ShowCenterColumn)
+                            {
+                                <td class="text-nowrap">@s.CenterName</td>
+                            }
+                            <td>@if (!string.IsNullOrEmpty(s.Category)) { <span class="cat-badge">@s.Category</span> }</td>
+                            <td><span class="badge-soft @Fmt.StatusClass(s.Status)">@Fmt.Label(s.Status)</span></td>
+                            <td class="text-end text-nowrap">@Fmt.Num(s.TotalFee)</td>
+                            <td class="text-end text-nowrap">
+                                <div class="fw-medium">@Fmt.Num(s.Paid)</div>
+                                <div class="d-flex align-items-center gap-2 mt-1">
+                                    <div class="bar thin flex-grow-1"><span style="width:@pct%"></span></div>
+                                    <small class="text-muted" style="width:2.2rem">@pct%</small>
+                                </div>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                @if (s.Debt > 0)
+                                {
+                                    <span class="fw-semibold text-danger">@Fmt.Num(s.Debt)</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-soft soft-success">To'langan</span>
+                                }
+                            </td>
+                            <td class="text-nowrap">
+                                <div>@Fmt.Date(s.LastPaidAt)</div>
+                                <div class="person-sub">@(s.PaymentCount > 0 ? $"{s.PaymentCount} ta to'lov" : "to'lov yo'q")</div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td></td>
+                        <td colspan="@(Model.ShowCenterColumn ? 4 : 3)">Jami: @Model.Summary.StudentCount ta o'quvchi (filtr bo'yicha)</td>
+                        <td class="text-end text-nowrap">@Fmt.Num(Model.Summary.TotalFee)</td>
+                        <td class="text-end text-nowrap text-success">@Fmt.Num(Model.Summary.Paid)</td>
+                        <td class="text-end text-nowrap text-danger">@Fmt.Num(Model.Summary.Debt)</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <partial name="_Pager" model="Model.Rows.Pager" />
+    }
+</div>

@@ -1,0 +1,66 @@
+@model AuditListViewModel
+@{
+    ViewData["Title"] = "Amallar tarixi";
+    string Icon(string action) => action switch
+    {
+        var a when a.Contains("o'chirdi") => "bi-trash3 tone-danger",
+        var a when a.Contains("To'lov") => "bi-cash-coin tone-success",
+        var a when a.Contains("qo'shdi") => "bi-plus-lg tone-primary",
+        var a when a.Contains("kirdi") => "bi-box-arrow-in-right tone-violet",
+        _ => "bi-pencil tone-warning"
+    };
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Amallar tarixi</h1>
+        <div class="page-sub">Kim, qachon va nima qilgani — o'zgartirib bo'lmaydigan jurnal</div>
+    </div>
+</div>
+
+<div class="card">
+    <form method="get" class="filter-bar">
+        <div class="search">
+            <i class="bi bi-search"></i>
+            <input type="search" name="q" value="@Model.Q" class="form-control" placeholder="Foydalanuvchi, amal yoki o'quvchi ismi..." />
+        </div>
+        <div class="input-group w-auto">
+            <input type="date" name="from" value="@Model.From?.ToString("yyyy-MM-dd")" class="form-control" />
+            <span class="input-group-text">—</span>
+            <input type="date" name="to" value="@Model.To?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <button class="btn btn-light"><i class="bi bi-funnel"></i> Filtr</button>
+    </form>
+
+    @if (Model.Rows.Items.Count == 0)
+    {
+        <div class="empty">
+            <div class="empty-icon"><i class="bi bi-clock-history"></i></div>
+            <h3>Yozuv topilmadi</h3>
+        </div>
+    }
+    else
+    {
+        <ul class="timeline">
+            @foreach (var a in Model.Rows.Items)
+            {
+                var ic = Icon(a.Action).Split(' ');
+                <li>
+                    <span class="dot @ic[1]"><i class="bi @ic[0]"></i></span>
+                    <div class="flex-grow-1 min-w-0">
+                        <div><b>@a.UserName</b> <span class="text-muted">—</span> @a.Action</div>
+                        @if (!string.IsNullOrEmpty(a.Details))
+                        {
+                            <div class="person-sub">@a.Details</div>
+                        }
+                    </div>
+                    <div class="text-end text-nowrap small">
+                        <div>@Fmt.DateTime(a.At)</div>
+                        <div class="text-muted">@a.Ip</div>
+                    </div>
+                </li>
+            }
+        </ul>
+        <partial name="_Pager" model="Model.Rows.Pager" />
+    }
+</div>

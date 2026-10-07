@@ -1,0 +1,188 @@
+@model PaymentListViewModel
+@{
+    ViewData["Title"] = "To'lovlar";
+    var today = DateTime.Today;
+    var monthStart = Queries.MonthStart();
+    string Range(DateTime from, DateTime to) => Url.Action("Index", new { centerId = Model.CenterId, method = Model.Method, from = from.ToString("yyyy-MM-dd"), to = to.ToString("yyyy-MM-dd") })!;
+    bool IsRange(DateTime from, DateTime to) => Model.From.Date == from.Date && Model.To.Date == to.Date;
+    var ranges = new (string Text, DateTime From, DateTime To)[]
+    {
+        ("Bugun", today, today),
+        ("Kecha", today.AddDays(-1), today.AddDays(-1)),
+        ("7 kun", today.AddDays(-6), today),
+        ("Shu oy", monthStart, today),
+        ("O'tgan oy", monthStart.AddMonths(-1), monthStart.AddDays(-1)),
+        ("Shu yil", new DateTime(today.Year, 1, 1), today)
+    };
+    var days = (Model.To.Date - Model.From.Date).Days + 1;
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">To'lovlar (kassa)</h1>
+        <div class="page-sub">@Fmt.Date(Model.From) — @Fmt.Date(Model.To) oralig'ida olingan pullar</div>
+    </div>
+    <div class="d-flex gap-2 no-print">
+        <a class="btn btn-light" href="@QueryUrl.ForAction(Context.Request, "/Payments/Export")"><i class="bi bi-file-earmark-excel text-success"></i> Excel</a>
+        <button type="button" class="btn btn-light" onclick="window.print()"><i class="bi bi-printer"></i> Chop etish</button>
+    </div>
+</div>
+
+<div class="card mb-4 no-print">
+    <form method="get" class="filter-bar border-0">
+        @if (Me.IsOwner)
+        {
+            <select name="centerId" asp-items="ViewBag.Centers" class="form-select w-auto">
+                <option value="">Barcha markazlar</option>
+            </select>
+        }
+        <select name="method" class="form-select w-auto">
+            <option value="">Barcha usullar</option>
+            @foreach (var m in Enum.GetValues<PaymentMethod>())
+            {
+                <option value="@m" selected="@(Model.Method == m)">@Fmt.Label(m)</option>
+            }
+        </select>
+        <div class="input-group w-auto">
+            <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+            <input type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" class="form-control" />
+            <span class="input-group-text">—</span>
+            <input type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <button class="btn btn-primary"><i class="bi bi-funnel"></i> Ko'rsatish</button>
+    </form>
+    <div class="px-3 pb-3">
+        <div class="chip-group flex-wrap">
+            @foreach (var r in ranges)
+            {
+                <a href="@Range(r.From, r.To)" class="@(IsRange(r.From, r.To) ? "active" : "")">@r.Text</a>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">Jami olindi</span><span class="kpi-icon tone-success"><i class="bi bi-cash-stack"></i></span></div>
+            <div class="kpi-value text-success">@Fmt.Num(Model.Sum)<small>so'm</small></div>
+            <div class="kpi-foot">@Model.Rows.Total ta to'lov · @days kun</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">O'rtacha to'lov</span><span class="kpi-icon tone-primary"><i class="bi bi-calculator"></i></span></div>
+            <div class="kpi-value">@Fmt.Num(Model.Rows.Total > 0 ? Model.Sum / Model.Rows.Total : 0)<small>so'm</small></div>
+            <div class="kpi-foot">kuniga o'rtacha @Fmt.Money(days > 0 ? Model.Sum / days : 0)</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">To'lov usullari</span><span class="kpi-icon tone-violet"><i class="bi bi-credit-card"></i></span></div>
+            @if (Model.ByMethod.Count == 0)
+            {
+                <div class="text-muted small">Ma'lumot yo'q</div>
+            }
+            @foreach (var m in Model.ByMethod)
+            {
+                <div class="d-flex justify-content-between small py-1">
+                    <span>@m.Name <span class="text-muted">(@m.Count)</span></span>
+                    <b class="tabular">@Fmt.Num(m.Sum)</b>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (Model.ByCenter.Count > 1)
+{
+    <div class="card mb-4">
+        <div class="card-header"><h2 class="card-title">Markazlar bo'yicha</h2></div>
+        <div class="table-wrap">
+            <table class="table table-pm">
+                <thead>
+                    <tr><th>Markaz</th><th class="text-center">To'lovlar</th><th class="text-end">Summa</th><th style="width:35%">Ulushi</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.ByCenter)
+                    {
+                        var share = Fmt.Percent(c.Sum, Model.Sum);
+                        <tr>
+                            <td class="fw-medium">@c.Name</td>
+                            <td class="text-center">@c.Count</td>
+                            <td class="text-end fw-semibold text-success text-nowrap">@Fmt.Money(c.Sum)</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bar flex-grow-1"><span style="width:@share%"></span></div>
+                                    <small class="text-muted" style="width:2.5rem">@share%</small>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header"><h2 class="card-title">To'lovlar ro'yxati</h2></div>
+    @if (Model.Rows.Items.Count == 0)
+    {
+        <div class="empty">
+            <div class="empty-icon"><i class="bi bi-wallet2"></i></div>
+            <h3>Bu oraliqda to'lov yo'q</h3>
+            <p class="mb-0">Boshqa sana oralig'ini tanlab ko'ring.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-pm table-hover">
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Sana</th>
+                        <th>O'quvchi</th>
+                        <th>Markaz</th>
+                        <th>Usul</th>
+                        <th class="text-end">Summa</th>
+                        <th>Qabul qildi</th>
+                        <th class="no-print"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model.Rows.Items)
+                    {
+                        <tr data-href="@Url.Action("Details", "Students", new { id = p.StudentId })">
+                            <td class="text-muted">@p.Id.ToString("D6")</td>
+                            <td class="text-nowrap">@Fmt.Date(p.PaidAt)</td>
+                            <td>
+                                <a class="person-name" asp-controller="Students" asp-action="Details" asp-route-id="@p.StudentId">@p.StudentName</a>
+                                @if (!string.IsNullOrEmpty(p.Note))
+                                {
+                                    <div class="person-sub">@p.Note</div>
+                                }
+                            </td>
+                            <td class="text-nowrap">@p.CenterName</td>
+                            <td class="text-nowrap"><i class="bi @Fmt.MethodIcon(p.Method) text-muted"></i> @Fmt.Label(p.Method)</td>
+                            <td class="text-end fw-semibold text-success text-nowrap">+@Fmt.Num(p.Amount)</td>
+                            <td class="small text-muted">@p.CreatedBy</td>
+                            <td class="text-end no-print">
+                                <a class="btn btn-sm btn-light btn-icon" asp-action="Receipt" asp-route-id="@p.Id" target="_blank" title="Kvitansiya"><i class="bi bi-printer"></i></a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5">Jami (@Model.Rows.Total ta to'lov)</td>
+                        <td class="text-end text-success text-nowrap">@Fmt.Num(Model.Sum)</td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <partial name="_Pager" model="Model.Rows.Pager" />
+    }
+</div>

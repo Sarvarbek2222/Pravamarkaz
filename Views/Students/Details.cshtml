@@ -1,0 +1,223 @@
+@model StudentDetailsViewModel
+@{
+    var s = Model.Student;
+    ViewData["Title"] = s.FullName;
+    var pct = Fmt.Percent(Model.Paid, s.TotalFee);
+    long running = 0;
+}
+
+<div class="page-header">
+    <div>
+        <div class="crumbs no-print">
+            <a asp-controller="Centers" asp-action="Index">Markazlar</a><i class="bi bi-chevron-right"></i>
+            <a asp-controller="Centers" asp-action="Details" asp-route-id="@s.CenterId">@s.Center?.Name</a><i class="bi bi-chevron-right"></i>
+            O'quvchi
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 no-print">
+        <button type="button" class="btn btn-light" onclick="window.print()"><i class="bi bi-printer"></i> Chop etish</button>
+        <a class="btn btn-light" asp-action="Edit" asp-route-id="@s.Id"><i class="bi bi-pencil"></i> Tahrirlash</a>
+        @if (Me.IsOwner)
+        {
+            <a class="btn btn-light text-danger" asp-action="Delete" asp-route-id="@s.Id"><i class="bi bi-trash3"></i></a>
+        }
+        @if (Model.Debt > 0)
+        {
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#payModal"><i class="bi bi-plus-circle"></i> To'lov qabul qilish</button>
+        }
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-column flex-md-row gap-4 align-items-md-center">
+            @if (s.PhotoFileName != null)
+            {
+                <a href="@Url.Action("Photo", new { id = s.Id })" target="_blank"><img class="profile-photo" src="@Url.Action("Photo", new { id = s.Id })" alt="@s.FullName" /></a>
+            }
+            else
+            {
+                <div class="profile-photo">@Fmt.Initials(s.LastName, s.FirstName)</div>
+            }
+            <div class="flex-grow-1">
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <span class="badge-soft @Fmt.StatusClass(s.Status)">@Fmt.Label(s.Status)</span>
+                    @if (!string.IsNullOrEmpty(s.Category))
+                    {
+                        <span class="badge-soft soft-violet no-dot"><i class="bi bi-car-front"></i> "@s.Category" toifa</span>
+                    }
+                    @if (Model.Debt <= 0)
+                    {
+                        <span class="badge-soft soft-success no-dot"><i class="bi bi-patch-check"></i> To'liq to'langan</span>
+                    }
+                </div>
+                <h1 class="page-title mb-1">@s.FullName</h1>
+                <div class="text-muted mb-3">
+                    <i class="bi bi-building"></i> @s.Center?.Name
+                    <span class="mx-2">·</span><i class="bi bi-calendar3"></i> Qabul: @Fmt.Date(s.EnrolledAt)
+                    @if (!string.IsNullOrEmpty(s.Phone))
+                    {
+                        <span class="mx-2">·</span><a href="tel:@s.Phone"><i class="bi bi-telephone"></i> @s.Phone</a>
+                    }
+                </div>
+                <div class="info-list">
+                    <div class="info-item"><div class="k">Tug'ilgan sana</div><div class="v">@Fmt.Date(s.BirthDate) <span class="text-muted">(@Fmt.Age(s.BirthDate) yosh)</span></div></div>
+                    <div class="info-item"><div class="k">Pasport</div><div class="v">@(s.PassportNo ?? "—")</div></div>
+                    <div class="info-item"><div class="k">Shartnoma</div><div class="v">@(s.ContractNo ?? "—")</div></div>
+                    <div class="info-item"><div class="k">Manzil</div><div class="v">@(s.Address ?? "—")</div></div>
+                </div>
+                @if (!string.IsNullOrEmpty(s.Note))
+                {
+                    <div class="alert alert-light border mt-3 mb-0 py-2 small"><i class="bi bi-sticky"></i> @s.Note</div>
+                }
+            </div>
+            <div class="d-flex flex-column align-items-center gap-2 px-md-3">
+                <div class="money-ring" style="--p:@pct"><div><b>@pct%</b><span>to'langan</span></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">Kurs narxi</span><span class="kpi-icon tone-violet"><i class="bi bi-receipt"></i></span></div>
+            <div class="kpi-value">@Fmt.Num(s.TotalFee)<small>so'm</small></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">To'ladi</span><span class="kpi-icon tone-success"><i class="bi bi-cash-coin"></i></span></div>
+            <div class="kpi-value text-success">@Fmt.Num(Model.Paid)<small>so'm</small></div>
+            <div class="kpi-foot">@Model.Payments.Count ta to'lov</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi">
+            <div class="kpi-head"><span class="kpi-label">Qolgan qarz</span><span class="kpi-icon tone-danger"><i class="bi bi-hourglass-split"></i></span></div>
+            <div class="kpi-value @(Model.Debt > 0 ? "text-danger" : "")">@Fmt.Num(Model.Debt)<small>so'm</small></div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">To'lovlar tarixi</h2>
+        @if (Model.Debt > 0)
+        {
+            <button type="button" class="btn btn-sm btn-success no-print" data-bs-toggle="modal" data-bs-target="#payModal"><i class="bi bi-plus-lg"></i> To'lov</button>
+        }
+    </div>
+    @if (Model.Payments.Count == 0)
+    {
+        <div class="empty">
+            <div class="empty-icon"><i class="bi bi-wallet2"></i></div>
+            <h3>Hali to'lov qilinmagan</h3>
+            <p class="mb-0">"To'lov qabul qilish" tugmasi orqali birinchi to'lovni kiriting.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-pm">
+                <thead>
+                    <tr>
+                        <th>Kvitansiya</th>
+                        <th>Sana</th>
+                        <th>Usul</th>
+                        <th class="text-end">Summa</th>
+                        <th class="text-end">Qolgan qarz</th>
+                        <th>Qabul qildi</th>
+                        <th>Izoh</th>
+                        <th class="no-print"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model.Payments)
+                    {
+                        running += p.Amount;
+                        <tr>
+                            <td><span class="text-muted">№</span>@p.ReceiptNo</td>
+                            <td class="text-nowrap">@Fmt.Date(p.PaidAt)</td>
+                            <td class="text-nowrap"><i class="bi @Fmt.MethodIcon(p.Method) text-muted"></i> @Fmt.Label(p.Method)</td>
+                            <td class="text-end text-nowrap fw-semibold text-success">+@Fmt.Num(p.Amount)</td>
+                            <td class="text-end text-nowrap text-muted">@Fmt.Num(s.TotalFee - running)</td>
+                            <td class="small">@p.CreatedBy<div class="text-muted">@Fmt.DateTime(p.CreatedAt)</div></td>
+                            <td class="small">@p.Note</td>
+                            <td class="text-end text-nowrap no-print">
+                                <a class="btn btn-sm btn-light btn-icon" asp-controller="Payments" asp-action="Receipt" asp-route-id="@p.Id" target="_blank" title="Kvitansiya"><i class="bi bi-printer"></i></a>
+                                @if (Me.IsOwner)
+                                {
+                                    <form asp-controller="Payments" asp-action="Delete" asp-route-id="@p.Id" method="post" class="d-inline"
+                                          data-confirm="@Fmt.Date(p.PaidAt) dagi @Fmt.Money(p.Amount) lik to'lov (№@p.ReceiptNo) o'chirilsinmi? Bu amal tarixga yoziladi.">
+                                        <button type="submit" class="btn btn-sm btn-light btn-icon text-danger" title="O'chirish"><i class="bi bi-trash3"></i></button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3">Jami</td>
+                        <td class="text-end text-nowrap text-success">@Fmt.Num(Model.Paid)</td>
+                        <td class="text-end text-nowrap text-danger">@Fmt.Num(Model.Debt)</td>
+                        <td colspan="3"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+</div>
+
+@if (Model.Debt > 0)
+{
+    <div class="modal fade" id="payModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form asp-controller="Payments" asp-action="Create" method="post" class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title fw-semibold">To'lov qabul qilish</h5>
+                        <div class="small text-muted">@s.FullName · qarz: <b class="text-danger">@Fmt.Money(Model.Debt)</b></div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="StudentId" value="@s.Id" />
+                    <div class="mb-3">
+                        <label class="form-label req" for="Amount">Summa</label>
+                        <div class="input-group input-group-lg">
+                            <input type="text" id="Amount" name="Amount" value="@Model.NewPayment.Amount" class="form-control fw-semibold" required data-money />
+                            <span class="input-group-text">so'm</span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            <button type="button" class="btn btn-sm btn-light" data-fill-amount="@Model.Debt" data-target="#Amount">Qarzning hammasi</button>
+                            @foreach (var q in new long[] { 500_000, 1_000_000, 2_000_000 }.Where(v => v < Model.Debt))
+                            {
+                                <button type="button" class="btn btn-sm btn-light" data-fill-amount="@q" data-target="#Amount">@Fmt.Short(q)</button>
+                            }
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label" for="PaidAt">Sana</label>
+                            <input type="date" id="PaidAt" name="PaidAt" value="@Model.NewPayment.PaidAt.ToString("yyyy-MM-dd")" max="@DateTime.Today.ToString("yyyy-MM-dd")" class="form-control" required />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="Method">To'lov usuli</label>
+                            <select id="Method" name="Method" class="form-select" asp-items="Html.GetEnumSelectList<PaymentMethod>()"></select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="Note">Izoh</label>
+                            <input type="text" id="Note" name="Note" maxlength="300" class="form-control" placeholder="Ixtiyoriy" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Bekor qilish</button>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> Qabul qilish</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}

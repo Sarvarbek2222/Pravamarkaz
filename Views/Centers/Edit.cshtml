@@ -1,0 +1,43 @@
+@model Center
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "Yangi markaz" : "Markazni tahrirlash";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-xl-6">
+        <div class="page-header">
+            <div>
+                <div class="crumbs"><a asp-action="Index">Markazlar</a><i class="bi bi-chevron-right"></i>@(isNew ? "Yangi" : Model.Name)</div>
+                <h1 class="page-title">@ViewData["Title"]</h1>
+            </div>
+        </div>
+        <form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? (int?)null : Model.Id)" method="post" class="card">
+            <div class="form-section">
+                <div class="form-section-title"><i class="bi bi-building"></i> Markaz ma'lumotlari</div>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label req"></label>
+                    <input asp-for="Name" class="form-control" autofocus placeholder="Masalan: Chilonzor filiali" />
+                    <span asp-validation-for="Name" class="field-validation-error"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Address" class="form-label"></label>
+                    <input asp-for="Address" class="form-control" placeholder="Shahar, tuman, ko'cha" />
+                </div>
+                <div>
+                    <label asp-for="Phone" class="form-label"></label>
+                    <input asp-for="Phone" class="form-control" placeholder="+998 90 123 45 67" />
+                </div>
+            </div>
+            <div class="card-footer d-flex gap-2 justify-content-end">
+                <a class="btn btn-light" href="@(isNew ? Url.Action("Index") : Url.Action("Details", new { id = Model.Id }))">Bekor qilish</a>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Saqlash</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,116 @@
+@model ReceiptViewModel
+@{
+    Layout = null;
+    var p = Model.Payment;
+    var s = p.Student!;
+}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kvitansiya №@p.ReceiptNo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Inter, system-ui, sans-serif; color: #0f172a; background: #eef1f6; margin: 0; padding: 24px; font-size: 14px; }
+        .sheet { max-width: 720px; margin: 0 auto; background: #fff; border-radius: 14px; box-shadow: 0 10px 30px -12px rgba(15,23,42,.25); overflow: hidden; }
+        .head { display: flex; justify-content: space-between; align-items: flex-start; padding: 28px 32px; background: #0b1324; color: #fff; }
+        .brand { display: flex; gap: 12px; align-items: center; }
+        .logo { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg,#3b82f6,#6366f1); display: grid; place-items: center; font-weight: 700; }
+        .brand b { font-size: 17px; display: block; }
+        .brand span { color: #a8b3c7; font-size: 12px; }
+        .no { text-align: right; }
+        .no .label { color: #a8b3c7; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+        .no .val { font-size: 22px; font-weight: 700; }
+        .body { padding: 28px 32px; }
+        h1 { font-size: 20px; margin: 0 0 4px; }
+        .muted { color: #64748b; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; margin: 22px 0; }
+        .k { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+        .v { font-weight: 600; }
+        .amount { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 18px 20px; margin: 8px 0 20px; }
+        .amount .sum { font-size: 30px; font-weight: 700; color: #047857; letter-spacing: -.02em; }
+        .amount .words { color: #065f46; margin-top: 4px; }
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 9px 0; border-bottom: 1px dashed #e2e8f0; }
+        td:last-child { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+        tr:last-child td { border-bottom: 0; }
+        .debt td:last-child { color: #dc2626; }
+        .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 44px; }
+        .sign div { border-top: 1px solid #94a3b8; padding-top: 6px; font-size: 12px; color: #64748b; }
+        .foot { padding: 14px 32px; background: #f8fafc; color: #94a3b8; font-size: 11px; display: flex; justify-content: space-between; }
+        .actions { max-width: 720px; margin: 0 auto 16px; display: flex; gap: 8px; justify-content: flex-end; }
+        .btn { font: inherit; border: 1px solid #cbd5e1; background: #fff; padding: 8px 16px; border-radius: 10px; cursor: pointer; text-decoration: none; color: #0f172a; }
+        .btn.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+        @@media print {
+            body { background: #fff; padding: 0; }
+            .actions { display: none; }
+            .sheet { box-shadow: none; border-radius: 0; }
+            .head { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .amount { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <div class="actions">
+        <a class="btn" href="@Url.Action("Details", "Students", new { id = s.Id })">← O'quvchiga qaytish</a>
+        <button class="btn primary" onclick="window.print()">Chop etish</button>
+    </div>
+    <div class="sheet">
+        <div class="head">
+            <div class="brand">
+                <div class="logo">PM</div>
+                <div>
+                    <b>@s.Center?.Name</b>
+                    <span>@s.Center?.Address @(string.IsNullOrEmpty(s.Center?.Phone) ? "" : "· " + s.Center.Phone)</span>
+                </div>
+            </div>
+            <div class="no">
+                <div class="label">Kvitansiya</div>
+                <div class="val">№ @p.ReceiptNo</div>
+                <div class="muted" style="color:#a8b3c7">@Fmt.Date(p.PaidAt)</div>
+            </div>
+        </div>
+        <div class="body">
+            <h1>To'lov kvitansiyasi</h1>
+            <div class="muted">Haydovchilik guvohnomasi olish kursi uchun to'lov</div>
+
+            <div class="grid">
+                <div><div class="k">O'quvchi</div><div class="v">@s.FullName</div></div>
+                <div><div class="k">Tug'ilgan sana</div><div class="v">@Fmt.Date(s.BirthDate)</div></div>
+                <div><div class="k">Toifa</div><div class="v">@(s.Category ?? "—")</div></div>
+                <div><div class="k">Shartnoma</div><div class="v">@(s.ContractNo ?? "—")</div></div>
+                <div><div class="k">To'lov usuli</div><div class="v">@Fmt.Label(p.Method)</div></div>
+                <div><div class="k">Qabul qildi</div><div class="v">@(p.CreatedBy ?? "—")</div></div>
+            </div>
+
+            <div class="amount">
+                <div class="k" style="color:#047857">To'langan summa</div>
+                <div class="sum">@Fmt.Money(p.Amount)</div>
+                <div class="words">@Fmt.Words(p.Amount)</div>
+            </div>
+
+            <table>
+                <tr><td>Kurs narxi</td><td>@Fmt.Money(s.TotalFee)</td></tr>
+                <tr><td>Shu to'lov bilan jami to'langan</td><td>@Fmt.Money(Model.PaidTotal)</td></tr>
+                <tr class="debt"><td>Qolgan qarz</td><td>@Fmt.Money(Math.Max(0, Model.Debt))</td></tr>
+            </table>
+
+            @if (!string.IsNullOrEmpty(p.Note))
+            {
+                <p class="muted" style="margin-top:16px">Izoh: @p.Note</p>
+            }
+
+            <div class="sign">
+                <div>Kassir imzosi</div>
+                <div>To'lovchi imzosi</div>
+            </div>
+        </div>
+        <div class="foot">
+            <span>Kiritildi: @Fmt.DateTime(p.CreatedAt)</span>
+            <span>Prava Markaz boshqaruv tizimi</span>
+        </div>
+    </div>
+</body>
+</html>

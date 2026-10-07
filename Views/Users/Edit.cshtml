@@ -1,0 +1,78 @@
+@model UserFormViewModel
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "Yangi foydalanuvchi" : "Foydalanuvchini tahrirlash";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-xl-6">
+        <div class="page-header">
+            <div>
+                <div class="crumbs"><a asp-action="Index">Foydalanuvchilar</a><i class="bi bi-chevron-right"></i>@(isNew ? "Yangi" : Model.FullName)</div>
+                <h1 class="page-title">@ViewData["Title"]</h1>
+            </div>
+        </div>
+
+        <form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? (int?)null : Model.Id)" method="post" class="card">
+            <div class="form-section">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+                <div class="form-section-title"><i class="bi bi-person"></i> Ma'lumotlar</div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="FullName" class="form-label req"></label>
+                        <input asp-for="FullName" class="form-control" placeholder="Masalan: Aliyev Vali" />
+                        <span asp-validation-for="FullName" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Username" class="form-label req"></label>
+                        <input asp-for="Username" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Username" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Password" class="form-label @(isNew ? "req" : "")"></label>
+                        <input asp-for="Password" class="form-control" autocomplete="new-password" placeholder="@(isNew ? "" : "O'zgartirmaslik uchun bo'sh qoldiring")" />
+                        <span asp-validation-for="Password" class="field-validation-error"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-section">
+                <div class="form-section-title"><i class="bi bi-shield-lock"></i> Huquqlar</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Role" class="form-label"></label>
+                        <select asp-for="Role" asp-items="Html.GetEnumSelectList<UserRole>()" class="form-select" id="roleSelect"></select>
+                        <div class="form-text">Egasi hamma narsani ko'radi; menejer faqat o'z markazini.</div>
+                    </div>
+                    <div class="col-md-6" id="centerBox">
+                        <label asp-for="CenterId" class="form-label req"></label>
+                        <select asp-for="CenterId" asp-items="ViewBag.Centers" class="form-select">
+                            <option value="">— Tanlang —</option>
+                        </select>
+                        <span asp-validation-for="CenterId" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input asp-for="IsActive" class="form-check-input" role="switch" />
+                            <label asp-for="IsActive" class="form-check-label">Faol (tizimga kira oladi)</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer d-flex gap-2 justify-content-end">
+                <a class="btn btn-light" asp-action="Index">Bekor qilish</a>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Saqlash</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var role = document.getElementById('roleSelect'), box = document.getElementById('centerBox');
+            function sync() { box.style.display = role.value === '@((int)UserRole.Manager)' ? '' : 'none'; }
+            role.addEventListener('change', sync); sync();
+        })();
+    </script>
+}

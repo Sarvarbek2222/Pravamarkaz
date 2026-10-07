@@ -1,0 +1,76 @@
+@model List<CenterSummary>
+@{
+    ViewData["Title"] = "Markazlar";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">O'quv markazlari</h1>
+        <div class="page-sub">@Model.Count ta markaz · har birining hisobi alohida yuritiladi</div>
+    </div>
+    @if (Me.IsOwner)
+    {
+        <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg"></i> Yangi markaz</a>
+    }
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="card">
+        <div class="empty">
+            <div class="empty-icon"><i class="bi bi-buildings"></i></div>
+            <h3>Hali markaz qo'shilmagan</h3>
+            <p>Filiallaringizni qo'shing — har birining o'quvchilari va to'lovlari alohida hisoblanadi.</p>
+            @if (Me.IsOwner)
+            {
+                <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg"></i> Markaz qo'shish</a>
+            }
+        </div>
+    </div>
+    return;
+}
+
+<div class="row g-3">
+    @foreach (var c in Model)
+    {
+        var pct = Fmt.Percent(c.Paid, c.TotalFee);
+        <div class="col-md-6 col-xxl-4">
+            <div class="card center-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-start gap-3 mb-3">
+                        <span class="kpi-icon tone-primary" style="width:46px;height:46px;font-size:1.3rem"><i class="bi bi-building"></i></span>
+                        <div class="flex-grow-1 min-w-0">
+                            <a class="stretched-link person-name fs-6 d-block text-truncate" asp-action="Details" asp-route-id="@c.Id">@c.Name</a>
+                            <div class="person-sub text-truncate"><i class="bi bi-geo-alt"></i> @(string.IsNullOrEmpty(c.Address) ? "Manzil ko'rsatilmagan" : c.Address)</div>
+                        </div>
+                        <span class="badge-soft soft-primary no-dot">@c.StudentCount o'quvchi</span>
+                    </div>
+
+                    <div class="d-flex align-items-end justify-content-between mb-2">
+                        <div>
+                            <div class="small text-muted">Olindi</div>
+                            <div class="fs-5 fw-bold text-success tabular">@Fmt.Num(c.Paid)</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted">Olinishi kerak</div>
+                            <div class="fw-semibold tabular">@Fmt.Num(c.TotalFee)</div>
+                        </div>
+                    </div>
+                    <div class="bar lg mb-3"><span style="width:@pct%"></span></div>
+
+                    <div class="stat-row"><span class="text-muted">Qolgan qarz</span><b class="text-danger tabular">@Fmt.Money(c.Debt)</b></div>
+                    <div class="stat-row"><span class="text-muted">Shu oy tushum</span><b class="tabular">@Fmt.Money(c.PaidThisMonth)</b></div>
+                    <div class="stat-row"><span class="text-muted">O'qimoqda / qarzdor</span><b>@c.ActiveCount / @c.DebtorCount</b></div>
+                </div>
+                @if (Me.IsOwner)
+                {
+                    <div class="card-footer d-flex gap-2 position-relative" style="z-index:2">
+                        <a class="btn btn-sm btn-light" asp-action="Edit" asp-route-id="@c.Id"><i class="bi bi-pencil"></i> Tahrirlash</a>
+                        <a class="btn btn-sm btn-light text-danger" asp-action="Delete" asp-route-id="@c.Id"><i class="bi bi-trash"></i></a>
+                        <a class="btn btn-sm btn-primary ms-auto" asp-controller="Students" asp-action="Create" asp-route-centerId="@c.Id"><i class="bi bi-person-plus"></i> O'quvchi</a>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
