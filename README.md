@@ -1,25 +1,25 @@
-# Prava markazlari — hisob-kitob tizimi
+﻿# Prava markazlari â€” hisob-kitob tizimi
 
 ASP.NET Core 8 MVC + MySQL. Bir nechta o'quv markazi (filial), har bir markazning o'quvchilari va to'lovlari alohida hisoblanadi.
 
 ## Imkoniyatlar
 
-- **Markazlar (filiallar)** — istalgancha; har birining o'quvchilari, tushumi va qarzi alohida.
-- **Rollar** — *Egasi* hamma markazni ko'radi; *Markaz menejeri* faqat o'ziga biriktirilgan markazni (bazada filtr bilan cheklangan).
-- **O'quvchilar** — F.I.Sh., rasm (3×4), tug'ilgan sana, telefon, pasport, manzil, toifa (A, B, BC, C...), holat (o'qimoqda / bitirgan / chiqib ketgan), shartnoma raqami, kurs narxi.
-- **To'lovlar** — sana, summa, usul (naqd, karta, o'tkazma, Click/Payme), kim qabul qilgani; har to'lovdan keyingi qolgan qarz.
-- **Kvitansiya** — chop etiladigan, raqamli, summa so'z bilan.
-- **Boshqaruv paneli** — oylik tushum grafigi (12 oy, markazlar bo'yicha), eng katta qarzdorlar, markazlar jadvali.
-- **Kassa** — sana oralig'i, markaz va to'lov usuli bo'yicha hisobot.
-- **Excel eksport** — o'quvchilar va to'lovlar.
-- **Amallar tarixi** — kim, qachon, nima qildi (to'lov qabul qilish/o'chirish, o'quvchi qo'shish...).
+- **Markazlar (filiallar)** â€” istalgancha; har birining o'quvchilari, tushumi va qarzi alohida.
+- **Rollar** â€” *Egasi* hamma markazni ko'radi; *Markaz menejeri* faqat o'ziga biriktirilgan markazni (bazada filtr bilan cheklangan).
+- **O'quvchilar** â€” F.I.Sh., rasm (3Ã—4), tug'ilgan sana, telefon, pasport, manzil, toifa (A, B, BC, C...), holat (o'qimoqda / bitirgan / chiqib ketgan), shartnoma raqami, kurs narxi.
+- **To'lovlar** â€” sana, summa, usul (naqd, karta, o'tkazma, Click/Payme), kim qabul qilgani; har to'lovdan keyingi qolgan qarz.
+- **Kvitansiya** â€” chop etiladigan, raqamli, summa so'z bilan.
+- **Boshqaruv paneli** â€” oylik tushum grafigi (12 oy, markazlar bo'yicha), eng katta qarzdorlar, markazlar jadvali.
+- **Kassa** â€” sana oralig'i, markaz va to'lov usuli bo'yicha hisobot.
+- **Excel eksport** â€” o'quvchilar va to'lovlar.
+- **Amallar tarixi** â€” kim, qachon, nima qildi (to'lov qabul qilish/o'chirish, o'quvchi qo'shish...).
 - Qidiruv, filtrlar, saralash, sahifalash, yorug'/qorong'i rejim, telefonga moslashgan dizayn.
 
 ## Lokal ishga tushirish
 
 1. `appsettings.json` dagi `ConnectionStrings:Default` ga MySQL ma'lumotlaringizni yozing.
-2. `dotnet run` — baza (`prava_markaz`) va jadvallar avtomatik yaratiladi/yangilanadi.
-3. Kirish: `admin` / `admin123` — **kirgandan keyin darhol o'zgartiring**.
+2. `dotnet run` â€” baza (`prava_markaz`) va jadvallar avtomatik yaratiladi/yangilanadi.
+3. Kirish: `admin` / `admin123` â€” **kirgandan keyin darhol o'zgartiring**.
 
 ### Namunaviy ma'lumotlar (sinash uchun)
 
@@ -28,13 +28,13 @@ dotnet run -- --seed-demo
 ```
 
 3 ta "Demo:" markaz, 30 o'quvchi, to'lovlar va 2 menejer qo'shadi (`menejer1`, `menejer2`, parol `menejer123`).
-Serverda **ishlatmang** — keyin demo markazlarni "Markazlar" bo'limidan o'chirib yuborish mumkin.
+Serverda **ishlatmang** â€” keyin demo markazlarni "Markazlar" bo'limidan o'chirib yuborish mumkin.
 
 ## Serverga qo'yish (GitHub orqali, Ubuntu/Debian)
 
-Repo: https://github.com/Sarvarbek2222/PravaMarkaz
+Repo: https://github.com/Sarvarbek2222/Pravamarkaz
 
-> ⚠️ Repo **public** — haqiqiy parollarni hech qachon `appsettings.json` ga yozib GitHub'ga yuklamang.
+> âš ï¸ Repo **public** â€” haqiqiy parollarni hech qachon `appsettings.json` ga yozib GitHub'ga yuklamang.
 > Serverdagi parollar faqat serverdagi `appsettings.Production.json` da turadi (u git'ga kirmaydi).
 
 ### 1. Bir martalik tayyorlov
@@ -52,10 +52,10 @@ GRANT ALL PRIVILEGES ON prava_markaz.* TO 'prava'@'localhost'; FLUSH PRIVILEGES;
 # Kodni yuklab olish
 sudo mkdir -p /opt/pravamarkaz /var/www/pravamarkaz
 sudo chown -R $USER /opt/pravamarkaz /var/www/pravamarkaz
-git clone https://github.com/Sarvarbek2222/PravaMarkaz.git /opt/pravamarkaz/src
+git clone https://github.com/Sarvarbek2222/Pravamarkaz.git /opt/pravamarkaz/src
 ```
 
-Serverdagi sozlamalar — `/var/www/pravamarkaz/appsettings.Production.json`:
+Serverdagi sozlamalar â€” `/var/www/pravamarkaz/appsettings.Production.json`:
 
 ```json
 {
@@ -67,7 +67,7 @@ Serverdagi sozlamalar — `/var/www/pravamarkaz/appsettings.Production.json`:
 }
 ```
 
-- `ServerVersion` — `mysql -V` yoki `SELECT VERSION();` natijasi. MariaDB bo'lsa masalan `10.11.6-mariadb`.
+- `ServerVersion` â€” `mysql -V` yoki `SELECT VERSION();` natijasi. MariaDB bo'lsa masalan `10.11.6-mariadb`.
 - `Admin` faqat birinchi ishga tushishda (bazada foydalanuvchi bo'lmasa) ishlatiladi.
 
 Xizmat va Nginx:
@@ -90,7 +90,7 @@ sudo certbot --nginx -d prava.example.uz
 ### 2. Birinchi ishga tushirish va har safar yangilash
 
 ```bash
-# Rasmlar va kalitlar papkasi — ilova (www-data) yoza olishi kerak
+# Rasmlar va kalitlar papkasi â€” ilova (www-data) yoza olishi kerak
 sudo mkdir -p /var/www/pravamarkaz/App_Data
 sudo chown -R www-data:www-data /var/www/pravamarkaz/App_Data
 
@@ -103,13 +103,13 @@ Keyinchalik kompyuterda o'zgartirib GitHub'ga `git push` qilsangiz, serverda faq
 bash /opt/pravamarkaz/src/deploy/deploy.sh
 ```
 
-Skript: `git pull` → `dotnet publish` → xizmatni to'xtatish → fayllarni ko'chirish (`App_Data` va `appsettings.Production.json` ga tegmaydi) → qayta ishga tushirish. Baza migratsiyalari ilova ishga tushganda avtomatik qo'llanadi.
+Skript: `git pull` â†’ `dotnet publish` â†’ xizmatni to'xtatish â†’ fayllarni ko'chirish (`App_Data` va `appsettings.Production.json` ga tegmaydi) â†’ qayta ishga tushirish. Baza migratsiyalari ilova ishga tushganda avtomatik qo'llanadi.
 
 Loglar: `sudo journalctl -u pravamarkaz -f`
 
 ### Eslatmalar
 
-- Rasmlar va cookie kalitlari `App_Data/` papkasida — uni zaxiralang. Boshqa joy uchun `Storage:DataPath`.
+- Rasmlar va cookie kalitlari `App_Data/` papkasida â€” uni zaxiralang. Boshqa joy uchun `Storage:DataPath`.
 - Nginx orqasida ishlaydi (X-Forwarded-* qo'llab-quvvatlanadi). Kestrel o'zi HTTPS ni boshqarsa, `"UseHttpsRedirection": true`.
 
 ### Zaxira nusxa
