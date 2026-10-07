@@ -1,4 +1,4 @@
-﻿# Prava markazlari â€” hisob-kitob tizimi
+# Prava markazlari â€” hisob-kitob tizimi
 
 ASP.NET Core 8 MVC + MySQL. Bir nechta o'quv markazi (filial), har bir markazning o'quvchilari va to'lovlari alohida hisoblanadi.
 

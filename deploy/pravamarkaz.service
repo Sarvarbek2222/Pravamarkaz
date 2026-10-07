@@ -5,7 +5,7 @@ After=network.target mysql.service
 
 [Service]
 WorkingDirectory=/var/www/pravamarkaz
-ExecStart=/usr/bin/dotnet /var/www/pravamarkaz/PravaMarkaz.dll --urls http://127.0.0.1:5000
+ExecStart=/usr/bin/dotnet /var/www/pravamarkaz/PravaMarkaz.dll --urls http://127.0.0.1:5005
 Restart=always
 RestartSec=5
 KillSignal=SIGINT
