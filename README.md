@@ -30,13 +30,32 @@ dotnet run -- --seed-demo
 3 ta "Demo:" markaz, 30 o'quvchi, to'lovlar va 2 menejer qo'shadi (`menejer1`, `menejer2`, parol `menejer123`).
 Serverda **ishlatmang** — keyin demo markazlarni "Markazlar" bo'limidan o'chirib yuborish mumkin.
 
-## Serverga qo'yish
+## Serverga qo'yish (GitHub orqali, Ubuntu/Debian)
+
+Repo: https://github.com/Sarvarbek2222/PravaMarkaz
+
+> ⚠️ Repo **public** — haqiqiy parollarni hech qachon `appsettings.json` ga yozib GitHub'ga yuklamang.
+> Serverdagi parollar faqat serverdagi `appsettings.Production.json` da turadi (u git'ga kirmaydi).
+
+### 1. Bir martalik tayyorlov
 
 ```bash
-dotnet publish -c Release -o publish
+# .NET 8 SDK, git, rsync, nginx
+sudo apt update
+sudo apt install -y dotnet-sdk-8.0 git rsync nginx
+
+# MySQL baza va foydalanuvchi
+sudo mysql -e "CREATE DATABASE prava_markaz CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'prava'@'localhost' IDENTIFIED BY 'KUCHLI_PAROL';
+GRANT ALL PRIVILEGES ON prava_markaz.* TO 'prava'@'localhost'; FLUSH PRIVILEGES;"
+
+# Kodni yuklab olish
+sudo mkdir -p /opt/pravamarkaz /var/www/pravamarkaz
+sudo chown -R $USER /opt/pravamarkaz /var/www/pravamarkaz
+git clone https://github.com/Sarvarbek2222/PravaMarkaz.git /opt/pravamarkaz/src
 ```
 
-`publish` papkasini serverga ko'chiring. Serverda `appsettings.Production.json` yarating (yoki `appsettings.json` ni tahrirlang):
+Serverdagi sozlamalar — `/var/www/pravamarkaz/appsettings.Production.json`:
 
 ```json
 {
@@ -44,34 +63,54 @@ dotnet publish -c Release -o publish
     "Default": "Server=localhost;Port=3306;Database=prava_markaz;User=prava;Password=KUCHLI_PAROL;CharSet=utf8mb4;"
   },
   "Database": { "ServerVersion": "8.0.36-mysql" },
-  "Admin": { "Username": "admin", "Password": "boshlang'ich-parol" }
+  "Admin": { "Username": "admin", "Password": "BOSHLANGICH_PAROL" }
 }
 ```
 
-- `ServerVersion` — serverdagi MySQL versiyasi (`SELECT VERSION();`). MariaDB bo'lsa masalan `10.11.6-mariadb`.
+- `ServerVersion` — `mysql -V` yoki `SELECT VERSION();` natijasi. MariaDB bo'lsa masalan `10.11.6-mariadb`.
 - `Admin` faqat birinchi ishga tushishda (bazada foydalanuvchi bo'lmasa) ishlatiladi.
-- Ilova ishga tushganda migratsiyalar avtomatik qo'llanadi.
-- Rasmlar va cookie kalitlari `App_Data/` papkasida saqlanadi — uni zaxiralang. Boshqa joyga qo'ymoqchi bo'lsangiz `Storage:DataPath` ni ko'rsating. Ilova shu papkaga yoza olishi kerak.
-- Nginx/IIS orqasida ishlaydi (X-Forwarded-* qo'llab-quvvatlanadi). Agar Kestrel o'zi HTTPS ni boshqarsa, `"UseHttpsRedirection": true` qiling.
-- Rasm yuklash 5 MB gacha; Nginx ishlatsangiz `client_max_body_size 10m;` qo'shing.
 
-### Linux (systemd) misol
+Xizmat va Nginx:
 
-```ini
-[Unit]
-Description=Prava markazlari
-After=network.target mysql.service
+```bash
+sudo cp /opt/pravamarkaz/src/deploy/pravamarkaz.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable pravamarkaz
 
-[Service]
-WorkingDirectory=/var/www/pravamarkaz
-ExecStart=/usr/bin/dotnet /var/www/pravamarkaz/PravaMarkaz.dll --urls http://127.0.0.1:5000
-Restart=always
-Environment=ASPNETCORE_ENVIRONMENT=Production
-User=www-data
+sudo cp /opt/pravamarkaz/src/deploy/nginx.conf /etc/nginx/sites-available/pravamarkaz
+sudo nano /etc/nginx/sites-available/pravamarkaz        # server_name ga domeningizni yozing
+sudo ln -s /etc/nginx/sites-available/pravamarkaz /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
 
-[Install]
-WantedBy=multi-user.target
+# HTTPS (domen bo'lsa)
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d prava.example.uz
 ```
+
+### 2. Birinchi ishga tushirish va har safar yangilash
+
+```bash
+# Rasmlar va kalitlar papkasi — ilova (www-data) yoza olishi kerak
+sudo mkdir -p /var/www/pravamarkaz/App_Data
+sudo chown -R www-data:www-data /var/www/pravamarkaz/App_Data
+
+bash /opt/pravamarkaz/src/deploy/deploy.sh
+```
+
+Keyinchalik kompyuterda o'zgartirib GitHub'ga `git push` qilsangiz, serverda faqat:
+
+```bash
+bash /opt/pravamarkaz/src/deploy/deploy.sh
+```
+
+Skript: `git pull` → `dotnet publish` → xizmatni to'xtatish → fayllarni ko'chirish (`App_Data` va `appsettings.Production.json` ga tegmaydi) → qayta ishga tushirish. Baza migratsiyalari ilova ishga tushganda avtomatik qo'llanadi.
+
+Loglar: `sudo journalctl -u pravamarkaz -f`
+
+### Eslatmalar
+
+- Rasmlar va cookie kalitlari `App_Data/` papkasida — uni zaxiralang. Boshqa joy uchun `Storage:DataPath`.
+- Nginx orqasida ishlaydi (X-Forwarded-* qo'llab-quvvatlanadi). Kestrel o'zi HTTPS ni boshqarsa, `"UseHttpsRedirection": true`.
 
 ### Zaxira nusxa
 

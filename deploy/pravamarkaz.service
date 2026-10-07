@@ -1,0 +1,18 @@
+# /etc/systemd/system/pravamarkaz.service
+[Unit]
+Description=Prava Markaz boshqaruv tizimi
+After=network.target mysql.service
+
+[Service]
+WorkingDirectory=/var/www/pravamarkaz
+ExecStart=/usr/bin/dotnet /var/www/pravamarkaz/PravaMarkaz.dll --urls http://127.0.0.1:5000
+Restart=always
+RestartSec=5
+KillSignal=SIGINT
+SyslogIdentifier=pravamarkaz
+User=www-data
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+[Install]
+WantedBy=multi-user.target
